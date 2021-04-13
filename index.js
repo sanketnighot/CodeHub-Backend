@@ -16,7 +16,7 @@ mongoose.connect("mongodb://127.0.0.1:27017/codehub", {
 }).then(() =>{
     console.log("MongoDB Database Conncted ...");
 });
-
+app.get("/", (req, res) =>{res.send("Welcome to CodeHub Server ... ('This is a root Path')")})
 // ---------------------------------------------------------------------------------------------------------
 // --------------------------------------------* User Schema *----------------------------------------------
 // ------------------------------------------* SignUp / Login *---------------------------------------------
@@ -63,7 +63,7 @@ app.get('/user-email=:email&password=:password', async (req, res)=>{            
         res.send(users);
     }
     else {
-        res.send("User Not Found")
+        res.status(404).send("User Not Found")
     }
 });
 
@@ -80,15 +80,9 @@ const projectSchema = new mongoose.Schema({                                     
 
 const projectModel = new mongoose.model("projects", projectSchema);                 // Project Model
 
-app.post('/CreateProject', async (req, res) => {                                          // Route for Creating Project
-    let creator = await userModel.findOne({email : req.body.project_created_by}, (err, user)=>{ console.log({error : err});});
-    console.log(creator)
-    const data = {
-        project_name : req.body.project_name,
-        project_created_on : req.body.project_created_on,
-        project_created_by : creator,
-        project_contributors : [creator]
-    }
+app.post('/createproject', async (req, res) => {
+    const data = req.body;                                       // Route for Creating Project
+    let creator = await userModel.findOne({email : data.project_created_by}, (err, user)=>{ console.log({error : err});});
     console.log(data);
     if (creator != null){
     let projData = new projectModel(data);
@@ -114,27 +108,48 @@ const fileSchema = new mongoose.Schema({                                        
 
 const fileModel = new mongoose.model("files", fileSchema);                          // file Model
 
-app.post('/AddFile', async (req, res) => {
+app.post('/addfile', async (req, res) => {
     let fileRecived = new fileModel(req.body);
-    let nowProject = projectModel.findOne({project_name : req.body.project_name}, (err, project) =>{console.log(err)});
-    let filesArray = nowProject.project_files
-    if (filesArray.length === 0){
+    let nowProject = await projectModel.findOne({ project_name : req.body.project_name }, (err, project) =>{console.log(err)});
+    let filesArray = nowProject.project_files;
+    if (filesArray.length == 0){
         filesArray = [fileRecived];
     }
     else {
         filesArray.push(fileRecived);
     }
-    let fileProject = projectModel.findOneAndUpdate({project_name : fileRecived.project_name},
-                                                    {project_files : filesArray});
-    if (fileProject != null) {
-        fileProject.project_files.push(fileRecived);        
-    }
-    else{
-        res.send("Project Not Found");
-    }
+
+    let fileProject = await projectModel.findOneAndUpdate({project_name : fileRecived.project_name},
+                                                    {project_files : filesArray}, { new : true }).then(()=>{ 
+                                                        res.send("File Added to Project");
+                                                    }).catch((err) =>{
+                                                        res.send(`Error: ${err}`)
+                                                        console.log("Error =>", err);
+                                                    });
+    console.log(fileProject);
 });
 
 
+
+// ---------------------------------------------------------------------------------------------------------
+// ------------------------------------* Add Contributors to Project *--------------------------------------
+
+app.post('/addcontributor', async (req, res) =>{
+    let contributorEmail = req.body.project_contributor;
+    let project_name_to_add = req.body.project_name;
+    let checkContributor = await userModel.findOne({email : contributorEmail},(error, user)=>{console.log("Error: ", error)})
+    if (checkContributor != null){
+        let getProjectToAdd = await projectModel.findOne({project_name : project_name_to_add}, (err, user)=>{ console.log({error : err}); });
+        let contributors = getProjectToAdd.project_contributors
+        contributors.push(contributorEmail);
+        getProjectToAdd = await projectModel.findOneAndUpdate({project_name : project_name_to_add},
+                                                                {project_contributors : contributors}).then(()=>{res.send("Contributer Added");
+                                                                                                    }).catch((error) =>{res.status(400).send(`Error Occured :=> ${error}`)});
+    }
+    else {
+        res.status(404).send(`No User with email id  "${contributorEmail}"found`)
+    }
+});
 
 // ---------------------------------------------------------------------------------------------------------
 // -------------------------------------* Create Contact Form Schema *--------------------------------------
@@ -146,7 +161,7 @@ const contactFormSchema = new mongoose.Schema({                                 
 });
 const contactFormModel = new mongoose.model("Contact Form", contactFormSchema);     // Contact Form Model
 
-app.post('/ContactForm', (req, res) => {                                            // Route to submit Contact Form
+app.post('/contactform', (req, res) => {                                            // Route to submit Contact Form
     const ddata = req.body
     let formData = new contactFormModel(ddata);
     formData.save().then(()=>{
