@@ -97,6 +97,37 @@ app.post('/createproject', async (req, res) => {                                
     }
 });
 
+app.get('/project-project_name=:project_name&user=:user', async (req, res) => {     // Route to fetch Perticular Project
+    let getProjectName = req.params.project_name;
+    let getUser = req.params.user;
+    let fetchProject = await projectModel.find({project_name : getProjectName}, (err, user)=>{ console.log({error : err}); });
+    for (let proj of fetchProject){
+        if ((proj.project_contributors).includes(getUser)){
+            res.send({project : proj});
+        }
+    else {
+        res.send({message : `Project Named ${getProjectName} having user ${getUser} Not Found`});
+    }
+    }
+});
+
+app.get('/allproject-user=:user', async (req, res) => {                             // Route to fetch All Projects of Perticular User
+    let getUser = req.params.user;
+    let fetchProject = await projectModel.find();
+    let getAllProjects = []
+    for (let proj of fetchProject){
+        if ((proj.project_contributors).includes(getUser) || (proj.project_created_by.email == getUser)){
+            getAllProjects.push(proj);
+        }
+    }
+    if (getAllProjects != [] ){
+        res.send({allProjects : getAllProjects, totalProjects : getAllProjects.length});
+    } 
+    else {
+        res.status(404).send({message : `Project Not Found for user ${getUser}`});
+    }
+});
+
 // ---------------------------------------------------------------------------------------------------------
 // ---------------------------------------* Add Files to Project *------------------------------------------
 
