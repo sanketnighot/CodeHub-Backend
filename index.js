@@ -19,17 +19,12 @@ mongoose.connect("mongodb://127.0.0.1:27017/codehub", {                         
 app.get("/", (req, res) => { res.send("Welcome to CodeHub Server ... ('This is a root Path')") })
 // ---------------------------------------------------------------------------------------------------------
 
-
 // --------------------------------------------* User Schema *----------------------------------------------
+import userModel from "./Models/userModel.mjs";
+import projectModel from "./Models/projectModel.mjs";
+import contactFormModel from "./Models/contactFormModel.mjs";
+import fileModel from "./Models/fileModel.mjs";
 // ------------------------------------------* SignUp / Login *---------------------------------------------
-
-const userSchema = new mongoose.Schema({                                            // User Schema
-    email: String,
-    password: String,
-    projects: Object
-});
-
-const userModel = new mongoose.model('Users', userSchema);                          // User Model
 
 // Creating User
 app.post('/signup', async (req, res) => {                                             // Rounte for Creating User
@@ -71,16 +66,6 @@ app.get('/user-email=:email&password=:password', async (req, res) => {          
 
 // ---------------------------------------------------------------------------------------------------------
 // ---------------------------------------* Create Project Schema *-----------------------------------------
-
-const projectSchema = new mongoose.Schema({                                         // Project Schema
-    project_name: String,
-    project_files: Array,
-    project_created_on: String,
-    project_created_by: String,
-    project_contributors: Array
-});
-
-const projectModel = new mongoose.model("projects", projectSchema);                 // Project Model
 
 app.post('/createproject', async (req, res) => {                                    // Route for Creating Project
     const data = req.body;
@@ -131,38 +116,33 @@ app.get('/allproject-user=:user', async (req, res) => {                         
 // ---------------------------------------------------------------------------------------------------------
 // ---------------------------------------* Add Files to Project *------------------------------------------
 
-const fileSchema = new mongoose.Schema({                                            // file Schema
-    file_name: String,
-    file_content: String,
-    file_created_on: String,
-    file_created_by: String,
-    project_name: String
-});
-
-const fileModel = new mongoose.model("files", fileSchema);                          // file Model
-
 app.post('/addfile', async (req, res) => {                                          // Route to add file
     let fileRecived = new fileModel(req.body);
     let nowProject = await projectModel.findOne({ project_name: req.body.project_name }, (err, project) => { console.log(err) });
-    let filesArray = nowProject.project_files;
-    if (filesArray.length == 0) {
-        filesArray = [fileRecived];
-    }
-    else {
-        filesArray.push(fileRecived);
-    }
+    if (nowProject != null){
+        let filesArray = nowProject.project_files;
+            if (filesArray.length == 0) {
+            filesArray = [fileRecived];
+            }
+            else {
+                filesArray.push(fileRecived);
+            }
 
-    let fileProject = await projectModel.findOneAndUpdate({ project_name: fileRecived.project_name },
-        { project_files: filesArray }, { new: true }).then(() => {
-            res.send("File Added to Project");
-        }).catch((err) => {
-            res.send(`Error: ${err}`)
-            console.log("Error =>", err);
-        });
-    console.log(fileProject);
+            let fileProject = await projectModel.findOneAndUpdate({ project_name: fileRecived.project_name },
+            { project_files: filesArray }, { new: true }).then(() => {
+                res.send("File Added to Project");
+            }).catch((err) => {
+                res.send(`Error: ${err}`)
+                console.log("Error =>", err);
+            });
+            console.log(fileProject);
+
+    }
+    else{
+        res.send("Project Doesn't Exist");
+    }
 });
-
-
+    
 
 // ---------------------------------------------------------------------------------------------------------
 // ------------------------------------* Add Contributors to Project *--------------------------------------
@@ -188,12 +168,6 @@ app.post('/addcontributor', async (req, res) => {                               
 // ---------------------------------------------------------------------------------------------------------
 // -------------------------------------* Create Contact Form Schema *--------------------------------------
 
-const contactFormSchema = new mongoose.Schema({                                     // Contact Form Schema
-    name: String,
-    email: String,
-    message: String
-});
-const contactFormModel = new mongoose.model("Contact Form", contactFormSchema);     // Contact Form Model
 
 app.post('/contactform', (req, res) => {                                            // Route to submit Contact Form
     const ddata = req.body
