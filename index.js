@@ -10,7 +10,7 @@ const port = 8000;
 app.listen(port, () => console.log(`CodeHub Server listening at http://localhost:${port} ...`));
 app.use(express.json());
 app.use(express.urlencoded({extended : false}));
-mongoose.connect("mongodb://127.0.0.1:27017/codehub", {
+mongoose.connect("mongodb://127.0.0.1:27017/codehub", {                             // Connecting to MongoDb Server
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() =>{
@@ -18,6 +18,8 @@ mongoose.connect("mongodb://127.0.0.1:27017/codehub", {
 });
 app.get("/", (req, res) =>{res.send("Welcome to CodeHub Server ... ('This is a root Path')")})
 // ---------------------------------------------------------------------------------------------------------
+
+
 // --------------------------------------------* User Schema *----------------------------------------------
 // ------------------------------------------* SignUp / Login *---------------------------------------------
 
@@ -80,8 +82,8 @@ const projectSchema = new mongoose.Schema({                                     
 
 const projectModel = new mongoose.model("projects", projectSchema);                 // Project Model
 
-app.post('/createproject', async (req, res) => {
-    const data = req.body;                                       // Route for Creating Project
+app.post('/createproject', async (req, res) => {                                    // Route for Creating Project
+    const data = req.body;                                       
     let creator = await userModel.findOne({email : data.project_created_by}, (err, user)=>{ console.log({error : err});});
     console.log(data);
     if (creator != null){
@@ -108,7 +110,7 @@ const fileSchema = new mongoose.Schema({                                        
 
 const fileModel = new mongoose.model("files", fileSchema);                          // file Model
 
-app.post('/addfile', async (req, res) => {
+app.post('/addfile', async (req, res) => {                                          // Route to add file
     let fileRecived = new fileModel(req.body);
     let nowProject = await projectModel.findOne({ project_name : req.body.project_name }, (err, project) =>{console.log(err)});
     let filesArray = nowProject.project_files;
@@ -134,7 +136,7 @@ app.post('/addfile', async (req, res) => {
 // ---------------------------------------------------------------------------------------------------------
 // ------------------------------------* Add Contributors to Project *--------------------------------------
 
-app.post('/addcontributor', async (req, res) =>{
+app.post('/addcontributor', async (req, res) =>{                                    // Route to add contributor
     let contributorEmail = req.body.project_contributor;
     let project_name_to_add = req.body.project_name;
     let checkContributor = await userModel.findOne({email : contributorEmail},(error, user)=>{console.log("Error: ", error)})
