@@ -78,7 +78,7 @@ app.post('/createproject', async (req, res) => {                                
         }).catch(err => { res.send(err) });
     }
     else {
-        res.send({ message: "Creator Not Found !!!" });
+        res.status(404).send({ message: "Creator Not Found !!!" });
     }
 });
 
@@ -91,7 +91,7 @@ app.get('/project-project_name=:project_name&user=:user', async (req, res) => { 
             res.send({ project: proj });
         }
         else {
-            res.send({ message: `Project Named ${getProjectName} having user ${getUser} Not Found` });
+            res.status(404).send({ message: `Project Named ${getProjectName} having user ${getUser} Not Found` });
         }
     }
 });
@@ -132,7 +132,7 @@ app.post('/addfile', async (req, res) => {                                      
             { project_files: filesArray }, { new: true }).then(() => {
                 res.send("File Added to Project");
             }).catch((err) => {
-                res.send(`Error: ${err}`)
+                res.status(400).send(`Error: ${err}`)
                 console.log("Error =>", err);
             });
             console.log(fileProject);
