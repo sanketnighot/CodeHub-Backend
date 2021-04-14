@@ -82,7 +82,7 @@ app.post('/createproject', async (req, res) => {                                
     }
 });
 
-app.get('/project-project_name=:project_name&user=:user', async (req, res) => {     // Route to fetch Perticular Project
+app.get('/project-project_name=:project_name&user=:user', async (req, res) => {     // Route to fetch Particular Project
     let getProjectName = req.params.project_name;
     let getUser = req.params.user;
     let fetchProject = await projectModel.find({ project_name: getProjectName }, (err, user) => { console.log({ error: err }); });
