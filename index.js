@@ -5,9 +5,18 @@ const require = createRequire(import.meta.url);
 // ExpressJs and MongoDb Initializing Code
 const mongoose = require('mongoose');
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const port = 8000;
 app.listen(port, () => console.log(`CodeHub Server listening at http://localhost:${port} ...`));
+app.use(cors(),  function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "http://localhost:3000"); // update to match the domain you will make the request from
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept"
+    );
+    next();
+  });
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 mongoose.connect("mongodb://127.0.0.1:27017/codehub", {                             // Connecting to MongoDb Server
@@ -27,7 +36,8 @@ import fileModel from "./Models/fileModel.mjs";
 // ------------------------------------------* SignUp / Login *---------------------------------------------
 
 // Creating User
-app.post('/signup', async (req, res) => {                                             // Rounte for Creating User
+app.post('/signup', async (req, res) => {   
+    console.log(req.body);                                      // Rounte for Creating User
     let userObj = new userModel(req.body);
     let users = await userModel.findOne({ email: userObj.email, password: userObj.password }, (err, user) => { console.log({ error: err }); });
     if (users != null) {
@@ -60,7 +70,7 @@ app.get('/user-email=:email&password=:password', async (req, res) => {          
         res.send(users);
     }
     else {
-        res.status(404).send("User Not Found")
+        res.status(404).send({message: "User Not Found"})
     }
 });
 
